@@ -13,9 +13,6 @@ import com.google.gson.Gson;
 public class JsonPersistenceService<T> {
     private final Gson gson = new Gson();
 
-    /**
-     * Carga la lista de objetos desde un archivo JSON.
-     */
     public List<T> load(String filePath, Class<T[]> clazz) throws IOException {
         if (!Files.exists(Path.of(filePath))) {
             return new ArrayList<>();

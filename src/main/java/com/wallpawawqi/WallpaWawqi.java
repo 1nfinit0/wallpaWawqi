@@ -19,7 +19,7 @@ public class WallpaWawqi {
           exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
           exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
           exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-          exchange.sendResponseHeaders(204, -1); // sin cuerpo
+          exchange.sendResponseHeaders(204, -1);
           exchange.close();
           return;
         }
