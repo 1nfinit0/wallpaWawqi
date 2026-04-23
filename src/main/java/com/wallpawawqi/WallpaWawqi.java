@@ -4,17 +4,18 @@ import com.sun.net.httpserver.*;
 import com.wallpawawqi.Class.Platillo;
 import com.wallpawawqi.services.JsonPersistenceService;
 
-import java.io.InputStream;
 import java.util.List;
 import com.google.gson.Gson;
 
 public class WallpaWawqi {
   public static void main(String[] args) throws Exception {
-    HttpServer server = HttpServer.create(new java.net.InetSocketAddress(8080), 0);
+    int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+    HttpServer server = HttpServer.create(new java.net.InetSocketAddress(port), 0);
+
     Gson gson = new Gson();
     server.createContext("/platillos", exchange -> {
       try {
-        
+
         if ("OPTIONS".equals(exchange.getRequestMethod())) {
           exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
           exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -24,42 +25,41 @@ public class WallpaWawqi {
           return;
         }
 
-        
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
 
-          String DATA_FILE = "src/main/resources/platillos.json";
+        String DATA_FILE = "src/main/resources/platillos.json";
 
-          if ("GET".equals(exchange.getRequestMethod())) {
-            JsonPersistenceService<Platillo> service = new JsonPersistenceService<>();
-            List<Platillo> platillos = service.load(DATA_FILE, Platillo[].class);
-            String json = gson.toJson(platillos);
-            
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, json.getBytes().length);
-            exchange.getResponseBody().write(json.getBytes());
-          }
+        if ("GET".equals(exchange.getRequestMethod())) {
+          JsonPersistenceService<Platillo> service = new JsonPersistenceService<>();
+          List<Platillo> platillos = service.load(DATA_FILE, Platillo[].class);
+          String json = gson.toJson(platillos);
 
-          if ("POST".equals(exchange.getRequestMethod())) {
-            String requestBody = new String(exchange.getRequestBody().readAllBytes());
-            Platillo nuevoPlatillo = gson.fromJson(requestBody, Platillo.class);
+          exchange.getResponseHeaders().add("Content-Type", "application/json");
+          exchange.sendResponseHeaders(200, json.getBytes().length);
+          exchange.getResponseBody().write(json.getBytes());
+        }
 
-            JsonPersistenceService<Platillo> service = new JsonPersistenceService<>();
-            List<Platillo> platillos = service.load(DATA_FILE, Platillo[].class);
+        if ("POST".equals(exchange.getRequestMethod())) {
+          String requestBody = new String(exchange.getRequestBody().readAllBytes());
+          Platillo nuevoPlatillo = gson.fromJson(requestBody, Platillo.class);
 
-            long nuevoId = service.add(
-                DATA_FILE,
-                platillos,
-                nuevoPlatillo,
-                Platillo::setId,
-                Platillo::getId);
+          JsonPersistenceService<Platillo> service = new JsonPersistenceService<>();
+          List<Platillo> platillos = service.load(DATA_FILE, Platillo[].class);
 
-            String response = "{\"message\": \"Platillo guardado con id " + nuevoId + "\"}";
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-            exchange.getResponseBody().write(response.getBytes());
-          }
+          long nuevoId = service.add(
+              DATA_FILE,
+              platillos,
+              nuevoPlatillo,
+              Platillo::setId,
+              Platillo::getId);
+
+          String response = "{\"message\": \"Platillo guardado con id " + nuevoId + "\"}";
+          exchange.getResponseHeaders().add("Content-Type", "application/json");
+          exchange.sendResponseHeaders(200, response.getBytes().length);
+          exchange.getResponseBody().write(response.getBytes());
+        }
 
       } catch (Exception e) {
         e.printStackTrace();

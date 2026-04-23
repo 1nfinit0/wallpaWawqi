@@ -25,17 +25,11 @@ public class JsonPersistenceService<T> {
         return new ArrayList<>(Arrays.asList(array));
     }
 
-    /**
-     * Guarda la lista completa en el archivo JSON.
-     */
     public void save(String filePath, List<T> data) throws IOException {
         String json = gson.toJson(data);
         Files.writeString(Path.of(filePath), json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
-    /**
-     * Agrega un nuevo objeto con id autoincremental.
-     */
     public long add(String filePath, List<T> data, T nuevo, IdSetter<T> idSetter, IdGetter<T> idGetter) throws IOException {
         // calcular nuevo id
         long nuevoId = data.stream().mapToLong(idGetter::getId).max().orElse(0) + 1;
@@ -47,14 +41,9 @@ public class JsonPersistenceService<T> {
 
         return nuevoId;
     }
-
-    /**
-     * Interfaces funcionales para manejar el id de forma genérica.
-     */
     public interface IdSetter<T> {
         void setId(T obj, long id);
     }
-
     public interface IdGetter<T> {
         long getId(T obj);
     }
