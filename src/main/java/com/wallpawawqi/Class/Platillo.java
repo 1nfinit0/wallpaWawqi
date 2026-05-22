@@ -28,5 +28,4 @@ public class Platillo {
 
     public Platillo() {
     }
-
 }
