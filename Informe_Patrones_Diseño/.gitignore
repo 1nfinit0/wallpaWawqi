@@ -1,0 +1,33 @@
+# LaTeX Compilation Artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+
+# Minted artifacts
+_minted-*/
+*.pyg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (pero MANTENER main.pdf)
+*.bak
+*.tmp
+
+# Python
+__pycache__/
+*.pyc

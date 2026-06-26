@@ -1,0 +1,46 @@
+{
+  "name": "LaTeX Informe",
+  "description": "Workspace settings para editar el informe LaTeX",
+  "settings": {
+    "[latex]": {
+      "editor.formatOnSave": false,
+      "editor.suggestSelection": "recentlyUsed",
+      "editor.defaultFormatter": "James-Yu.latex-workshop",
+    },
+    "latex-workshop.latex.tools": [
+      {
+        "name": "xelatex",
+        "command": "xelatex",
+        "args": [
+          "-shell-escape",
+          "-interaction=nonstopmode",
+          "-file-line-error",
+          "%DOCFILE%",
+        ],
+        "env": {},
+      },
+    ],
+    "latex-workshop.latex.recipes": [
+      {
+        "name": "xelatex",
+        "tools": ["xelatex"],
+      },
+      {
+        "name": "xelatex x2",
+        "tools": ["xelatex", "xelatex"],
+      },
+    ],
+    "latex-workshop.view.pdf.viewer": "tab",
+    "latex-workshop.synctex.afterBuild.enabled": true,
+    "editor.wordWrap": "on",
+    "editor.fontSize": 12,
+    "editor.fontFamily": "'Fira Code', 'Courier New', monospace",
+  },
+  "extensions": {
+    "recommendations": [
+      "James-Yu.latex-workshop",
+      "valentjn.vscode-ltex",
+      "ms-vscode.makefile-tools",
+    ],
+  },
+}

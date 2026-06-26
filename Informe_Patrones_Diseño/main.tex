@@ -1,0 +1,693 @@
+\documentclass[12pt, a4paper]{report}
+\usepackage[utf-8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{setspace}
+\usepackage{titlesec}
+
+% Configuración de márgenes
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+
+% Configuración de fuentes y espaciado
+\onehalfspacing
+
+% Configuración de headers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\fancyhead[L]{Análisis de Patrones de Diseño - WallpaWawqi}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% Configuración de títulos
+\titleformat{\chapter}[display]
+    {\Huge\bfseries}
+    {Capítulo \thechapter}{20pt}{\Huge}
+\titleformat{\section}
+    {\Large\bfseries}
+    {}{0pt}{}
+\titleformat{\subsection}
+    {\large\bfseries}
+    {}{0pt}{}
+
+% Configuración de minted
+\setminted{
+    linenos=true,
+    breaklines=true,
+    fontsize=\small,
+    bgcolor=lightgray!20
+}
+
+\usemintedstyle{monokai}
+
+\title{
+    \vspace*{\fill}
+    {\Huge \textbf{Análisis Detallado de Patrones de Diseño}}\\
+    \vspace{1cm}
+    {\LARGE Proyecto: WallpaWawqi}\\
+    \vspace{0.5cm}
+    {\large Backend - Sistema de Gestión de Restaurante}
+    \vspace*{\fill}
+}
+
+\author{
+    \Large Análisis de Arquitectura y Diseño\\
+    \large Sistema de Información WallpaWawqi
+}
+
+\date{\today}
+
+\begin{document}
+
+% Portada
+\maketitle
+
+% Página en blanco
+\newpage
+\thispagestyle{empty}
+\mbox{}
+
+% Tabla de contenidos
+\newpage
+\tableofcontents
+
+% Introdución
+\chapter{Introducción}
+
+El presente informe realiza un análisis detallado de los patrones de diseño implementados en el backend del proyecto WallpaWawqi, un sistema de gestión integral para restaurantes desarrollado en Java.
+
+\section{Contexto del Proyecto}
+
+WallpaWawqi es una aplicación que gestiona la operación de un restaurante, incluyendo:
+\begin{itemize}
+    \item Gestión de empleados por rol
+    \item Catálogo de platillos y menú
+    \item Persistencia de datos en formato JSON
+    \item API REST para consultas y registro de platillos
+\end{itemize}
+
+\section{Objetivo}
+
+Identificar, documentar y analizar los patrones de diseño implementados en la lógica del backend, evaluando su efectividad, coherencia arquitectónica y aplicabilidad a los requisitos del sistema.
+
+\section{Alcance}
+
+El análisis se enfoca exclusivamente en la lógica backend, excluyendo la interfaz web (carpeta webAPP). Se examinan:
+\begin{itemize}
+    \item Estructura de clases y herencia
+    \item Servicios de persistencia
+    \item Manejo de solicitudes HTTP
+    \item Uso de genéricos y programación funcional
+\end{itemize}
+
+\newpage
+
+\chapter{Estructura del Proyecto}
+
+\section{Arquitectura General}
+
+La arquitectura del backend se organiza en las siguientes capas:
+
+\begin{itemize}
+    \item \textbf{Capa de Modelos}: Clases que representan entidades de dominio
+    \item \textbf{Capa de Servicios}: Lógica de persistencia y acceso a datos
+    \item \textbf{Capa de Presentación}: Servidor HTTP que expone endpoints REST
+\end{itemize}
+
+\section{Componentes Principales}
+
+\subsection{Jerarquía de Empleados}
+
+\begin{verbatim}
+Empleado (abstract)
+  ├── Cocinero
+  ├── Mozo
+  └── PersonalDeLimpieza
+\end{verbatim}
+
+\subsection{Entidades de Negocio}
+
+\begin{itemize}
+    \item \textbf{Platillo}: Representa los platos disponibles en el menú
+    \item \textbf{Empleado}: Entidad base para todos los tipos de empleados
+\end{itemize}
+
+\subsection{Servicios}
+
+\begin{itemize}
+    \item \textbf{JsonPersistenceService}: Gestiona la persistencia genérica de datos
+\end{itemize}
+
+\newpage
+
+\chapter{Patrones de Diseño Identificados}
+
+\section{1. Template Method Pattern}
+
+\subsection{Descripción}
+
+El patrón Template Method define el esqueleto de un algoritmo en una clase base, permitiendo que las subclases sobrescriban pasos específicos sin cambiar la estructura del algoritmo.
+
+\subsection{Aplicación en WallpaWawqi}
+
+La clase abstracta \texttt{Empleado} implementa este patrón al:
+
+\begin{itemize}
+    \item Definir una estructura común para todos los empleados (propiedades básicas)
+    \item Proporcionar métodos plantilla como \texttt{registrarAsistencia()}
+    \item Permitir que cada subclase especializada implemente sus propios comportamientos específicos
+\end{itemize}
+
+\subsection{Diagrama Conceptual}
+
+\begin{verbatim}
+┌──────────────────────────────────────┐
+│        Empleado (Abstract)           │
+├──────────────────────────────────────┤
+│ - id: long                           │
+│ - name: String                       │
+│ - position: String                   │
+│ - email: String                      │
+│ - phone: String                      │
+├──────────────────────────────────────┤
+│ + registrarAsistencia(): void        │
+│ + getters/setters                    │
+└──────────────┬───────────────────────┘
+               │ heredan
+      ┌────────┼─────────────┐
+      │        │             │
+      ▼        ▼             ▼
+  ┌────────┐┌────────┐┌──────────────┐
+  │Cocinero││ Mozo   ││PersonalLimpz.│
+  └────────┘└────────┘└──────────────┘
+\end{verbatim}
+
+\subsection{Código: Clase Base Abstracta}
+
+\inputminted[firstline=1, lastline=35]{java}{../../src/main/java/com/wallpawawqi/Class/Empleado.java}
+
+\subsection{Beneficios}
+
+\begin{itemize}
+    \item \textbf{Reutilización de código}: Las propiedades comunes se definen una sola vez
+    \item \textbf{Cohesión}: Todos los empleados comparten la misma interfaz base
+    \item \textbf{Extensibilidad}: Nuevos tipos de empleados se agregan fácilmente
+    \item \textbf{Polimorfismo}: Se pueden tratar todos los empleados uniformemente
+\end{itemize}
+
+\newpage
+
+\section{2. Strategy Pattern}
+
+\subsection{Descripción}
+
+El patrón Strategy define una familia de algoritmos, encapsula cada uno y los hace intercambiables. Permite que el algoritmo varíe independientemente de los clientes que lo usan.
+
+\subsection{Aplicación en WallpaWawqi}
+
+Las subclases de \texttt{Empleado} representan diferentes \textbf{estrategias} de trabajo:
+
+\begin{itemize}
+    \item \textbf{Cocinero}: Estrategia de preparación de platillos
+    \item \textbf{Mozo}: Estrategia de atención al cliente
+    \item \textbf{PersonalDeLimpieza}: Estrategia de mantenimiento
+\end{itemize}
+
+Cada estrategia implementa sus propios métodos específicos que definen cómo ejecuta sus funciones.
+
+\subsection{Diagrama Conceptual}
+
+\begin{verbatim}
+┌─────────────────────────────────────┐
+│         Strategy (Empleado)         │
+│      Interfaz: registrarAsistencia()│
+└─────────────┬───────────────────────┘
+              │
+    ┌─────────┼──────────┐
+    │         │          │
+    ▼         ▼          ▼
+┌─────────┐┌─────────┐┌──────────────┐
+│ Cooking ││ Service ││Maintenance   │
+│Strategy ││Strategy ││Strategy      │
+└─────────┘└─────────┘└──────────────┘
+\end{verbatim}
+
+\subsection{Código: Estrategia 1 - Cocinero}
+
+\inputminted[firstline=1, lastline=22]{java}{../../src/main/java/com/wallpawawqi/Class/Subclases/Cocinero.java}
+
+\subsection{Código: Estrategia 2 - Mozo}
+
+\inputminted[firstline=1, lastline=26]{java}{../../src/main/java/com/wallpawawqi/Class/Subclases/Mozo.java}
+
+\subsection{Código: Estrategia 3 - PersonalDeLimpieza}
+
+\inputminted[firstline=1, lastline=19]{java}{../../src/main/java/com/wallpawawqi/Class/Subclases/PersonalDeLimpieza.java}
+
+\subsection{Ventajas}
+
+\begin{itemize}
+    \item \textbf{Flexibilidad}: Las estrategias pueden cambiar en tiempo de ejecución
+    \item \textbf{Modularidad}: Cada estrategia es independiente y auto-contenida
+    \item \textbf{Testabilidad}: Las estrategias se pueden probar aisladamente
+    \item \textbf{Mantenibilidad}: Los cambios en una estrategia no afectan otras
+\end{itemize}
+
+\newpage
+
+\section{3. Service Layer Pattern}
+
+\subsection{Descripción}
+
+El patrón Service Layer encapsula la lógica de negocio y acceso a datos en una capa separada. Proporciona una interfaz clara para operaciones específicas del dominio.
+
+\subsection{Aplicación en WallpaWawqi}
+
+La clase \texttt{JsonPersistenceService<T>} actúa como servicio reutilizable que:
+
+\begin{itemize}
+    \item Maneja la carga de datos desde JSON
+    \item Persiste datos en archivos JSON
+    \item Administra la generación de IDs
+    \item Abstrae la complejidad de I/O de archivos
+\end{itemize}
+
+\subsection{Responsabilidades}
+
+\begin{verbatim}
+JsonPersistenceService
+├── load()    → Carga datos del archivo JSON
+├── save()    → Persiste datos en JSON
+└── add()     → Agrega nuevo elemento y asigna ID
+\end{verbatim}
+
+\subsection{Código: Clase Servicio}
+
+\inputminted[firstline=1, lastline=40]{java}{../../src/main/java/com/wallpawawqi/services/JsonPersistenceService.java}
+
+\subsection{Beneficios}
+
+\begin{itemize}
+    \item \textbf{Separación de responsabilidades}: Lógica de datos separada del dominio
+    \item \textbf{Reutilización}: El servicio funciona con cualquier tipo de datos
+    \item \textbf{Testabilidad}: El servicio puede mockarse fácilmente
+    \item \textbf{Mantenibilidad}: Cambios en la persistencia no afectan el dominio
+\end{itemize}
+
+\newpage
+
+\section{4. Generic Types Pattern}
+
+\subsection{Descripción}
+
+Los genéricos de Java permiten escribir código parametrizado por tipos, mejorando la reutilización y seguridad de tipos sin sacrificar la flexibilidad.
+
+\subsection{Aplicación en WallpaWawqi}
+
+\texttt{JsonPersistenceService<T>} utiliza un parámetro de tipo genérico \texttt{T} para:
+
+\begin{itemize}
+    \item Trabajar con cualquier clase sin duplicar código
+    \item Mantener seguridad de tipos en tiempo de compilación
+    \item Evitar casting explícito innecesario
+\end{itemize}
+
+\subsection{Ejemplo de Uso}
+
+\begin{minted}{java}
+// Para persistencia de Platillos
+JsonPersistenceService<Platillo> servicePlatillos =
+    new JsonPersistenceService<>();
+List<Platillo> platillos = servicePlatillos.load(
+    "platillos.json",
+    Platillo[].class
+);
+
+// Para persistencia de Empleados
+JsonPersistenceService<Empleado> serviceEmpleados =
+    new JsonPersistenceService<>();
+List<Empleado> empleados = serviceEmpleados.load(
+    "empleados.json",
+    Empleado[].class
+);
+\end{minted}
+
+\subsection{Ventajas}
+
+\begin{itemize}
+    \item \textbf{DRY (Don't Repeat Yourself)}: Una sola implementación para múltiples tipos
+    \item \textbf{Type Safety}: El compilador valida los tipos
+    \item \textbf{Legibilidad}: El código es más claro y auto-documentado
+    \item \textbf{Rendimiento}: Sin sobrecarga de casting dinámico
+\end{itemize}
+
+\newpage
+
+\section{5. Functional Programming Pattern}
+
+\subsection{Descripción}
+
+La programación funcional trata las funciones como ciudadanos de primera clase, permitiendo pasar comportamiento como parámetros mediante interfaces funcionales o method references.
+
+\subsection{Aplicación en WallpaWawqi}
+
+El método \texttt{add()} de \texttt{JsonPersistenceService} utiliza este patrón:
+
+\begin{minted}{java}
+public long add(
+    String filePath,
+    List<T> data,
+    T nuevo,
+    IdSetter<T> idSetter,    // Comportamiento: set ID
+    IdGetter<T> idGetter     // Comportamiento: get ID
+) throws IOException {
+    // Calcula nuevo ID
+    long nuevoId = data.stream()
+        .mapToLong(idGetter::getId)    // Method reference
+        .max()
+        .orElse(0) + 1;
+
+    idSetter.setId(nuevo, nuevoId);
+    data.add(nuevo);
+    save(filePath, data);
+
+    return nuevoId;
+}
+\end{minted}
+
+\subsection{Interfaces Funcionales Definidas}
+
+\inputminted[firstline=35, lastline=40]{java}{../../src/main/java/com/wallpawawqi/services/JsonPersistenceService.java}
+
+\subsection{Uso en la Práctica}
+
+En el controlador HTTP se utiliza así:
+
+\begin{minted}{java}
+long nuevoId = service.add(
+    DATA_FILE,
+    platillos,
+    nuevoPlatillo,
+    Platillo::setId,    // Method reference a setter
+    Platillo::getId     // Method reference a getter
+);
+\end{minted}
+
+\subsection{Beneficios}
+
+\begin{itemize}
+    \item \textbf{Flexibilidad}: El comportamiento se inyecta como parámetro
+    \item \textbf{Reutilización}: La lógica de \texttt{add()} es agnóstica del tipo
+    \item \textbf{Concisión}: Los method references hacen el código más legible
+    \item \textbf{Expresividad}: El código describe \textit{qué} hacer, no \textit{cómo}
+\end{itemize}
+
+\newpage
+
+\section{6. Dependency Injection (Implícito)}
+
+\subsection{Descripción}
+
+Aunque no es explícito mediante frameworks como Spring, el código utiliza patrones que simulan inyección de dependencias.
+
+\subsection{Aplicación}
+
+En \texttt{WallpaWawqi.main()}:
+
+\begin{minted}{java}
+Gson gson = new Gson();  // Inyección manual
+JsonPersistenceService<Platillo> service =
+    new JsonPersistenceService<>();  // Inyección manual
+
+server.createContext("/platillos", exchange -> {
+    // Uso de dependencias
+    List<Platillo> platillos = service.load(...);
+    String json = gson.toJson(platillos);
+});
+\end{minted}
+
+Este patrón permite:
+\begin{itemize}
+    \item Desacoplamiento de dependencias
+    \item Facilidad de testing (reemplazar con mocks)
+    \item Flexibilidad en la configuración
+\end{itemize}
+
+\newpage
+
+\chapter{Análisis Integrado}
+
+\section{Interacción de Patrones}
+
+Los patrones se integran de forma coherente:
+
+\begin{enumerate}
+    \item \textbf{Template Method + Strategy}: Define roles y comportamientos
+    \item \textbf{Service Layer}: Abstrae la persistencia
+    \item \textbf{Generics}: Hace el servicio reutilizable
+    \item \textbf{Functional Programming}: Inyecta comportamientos específicos
+\end{enumerate}
+
+\section{Flujo de Datos}
+
+\begin{verbatim}
+HTTP Request
+    ↓
+WallpaWawqi (Main)
+    ↓
+JsonPersistenceService<T>
+    ↓
+Gson (JSON Serialization)
+    ↓
+File System (JSON)
+\end{verbatim}
+
+\section{Ejemplo Completo: Agregar un Platillo}
+
+\inputminted[firstline=45, lastline=65]{java}{../../src/main/java/com/wallpawawqi/WallpaWawqi.java}
+
+Este código demuestra:
+\begin{itemize}
+    \item \textbf{Generics}: \texttt{JsonPersistenceService<Platillo>}
+    \item \textbf{Service Layer}: Delegación al servicio
+    \item \textbf{Functional Programming}: \texttt{Platillo::setId}
+    \item \textbf{Dependency Injection}: Instancias inyectadas
+\end{itemize}
+
+\newpage
+
+\chapter{Evaluación y Recomendaciones}
+
+\section{Fortalezas}
+
+\begin{enumerate}
+    \item \textbf{Arquitectura Modular}: Separación clara de responsabilidades
+    \item \textbf{Reutilización de Código}: Service genérico evita duplicación
+    \item \textbf{Extensibilidad}: Fácil agregar nuevos tipos de empleados
+    \item \textbf{Buenas Prácticas}: Uso correcto de patrones GOF
+    \item \textbf{Type Safety}: Uso de genéricos y tipos fuerte
+\end{enumerate}
+
+\section{Áreas de Mejora}
+
+\subsection{1. Implementación de Métodos Plantilla}
+
+\textbf{Recomendación}: Los métodos plantilla en \texttt{Empleado} tienen solo TODOs.
+
+\begin{minted}{java}
+// Actual
+public void registrarAsistencia() {
+    // TODO registrar asistencia del empleado
+}
+
+// Propuesto
+public void registrarAsistencia() {
+    System.out.println("Asistencia registrada para: " + name);
+    // Persistir en base de datos
+}
+\end{minted}
+
+\subsection{2. Persistencia de Empleados}
+
+\textbf{Recomendación}: Extender \texttt{JsonPersistenceService} para persistir empleados.
+
+\begin{minted}{java}
+// Nuevo endpoint HTTP
+server.createContext("/empleados", exchange -> {
+    if ("GET".equals(exchange.getRequestMethod())) {
+        JsonPersistenceService<Empleado> service =
+            new JsonPersistenceService<>();
+        List<Empleado> empleados = service.load(
+            "src/main/resources/empleados.json",
+            Empleado[].class
+        );
+        // Responder con JSON
+    }
+});
+\end{minted}
+
+\subsection{3. Patrón Data Access Object (DAO)}
+
+\textbf{Recomendación}: Crear una interfaz DAO para abstraer mejor la persistencia.
+
+\begin{minted}{java}
+public interface Dao<T> {
+    List<T> findAll() throws IOException;
+    Optional<T> findById(long id) throws IOException;
+    void save(T entity) throws IOException;
+    void delete(long id) throws IOException;
+}
+
+public class JsonDao<T> implements Dao<T> {
+    private JsonPersistenceService<T> service;
+    private String filePath;
+
+    @Override
+    public List<T> findAll() throws IOException {
+        return service.load(filePath, getClazz());
+    }
+}
+\end{minted}
+
+\subsection{4. Manejo de Errores}
+
+\textbf{Recomendación}: Implementar excepciones personalizadas.
+
+\begin{minted}{java}
+public class DataPersistenceException extends Exception {
+    public DataPersistenceException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+}
+
+public class InvalidEmployeeException extends Exception {
+    public InvalidEmployeeException(String msg) {
+        super(msg);
+    }
+}
+\end{minted}
+
+\subsection{5. Validación de Datos}
+
+\textbf{Recomendación}: Agregar validación en el servicio.
+
+\begin{minted}{java}
+public long add(String filePath, List<T> data, T nuevo,
+                IdSetter<T> idSetter, IdGetter<T> idGetter)
+        throws IOException, InvalidDataException {
+    if (nuevo == null) {
+        throw new InvalidDataException("El objeto no puede ser nulo");
+    }
+    // ... resto del método
+}
+\end{minted}
+
+\newpage
+
+\chapter{Conclusiones}
+
+\section{Resumen de Patrones}
+
+El backend de WallpaWawqi implementa correctamente una combinación coherente de patrones de diseño:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Patrón} & \textbf{Componente} & \textbf{Propósito} \\
+\hline
+Template Method & Empleado (abstract) & Estructura común \\
+\hline
+Strategy & Cocinero, Mozo, PersonalLimpieza & Comportamientos específicos \\
+\hline
+Service Layer & JsonPersistenceService & Abstracción de datos \\
+\hline
+Generic Types & JsonPersistenceService<T> & Reutilización sin duplicación \\
+\hline
+Functional & IdSetter/IdGetter & Inyección de comportamiento \\
+\hline
+Dependency Injection & Manual (main) & Desacoplamiento \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Eficacia Arquitectónica}
+
+La arquitectura es \textbf{efectiva} porque:
+
+\begin{itemize}
+    \item Cumple con el principio de Single Responsibility
+    \item Facilita la extensión sin modificar código existente (Open/Closed)
+    \item Permite sustituir implementaciones (Dependency Inversion)
+    \item Evita duplicación mediante genéricos
+    \item Mantiene el código limpio y comprensible
+\end{itemize}
+
+\section{Aplicabilidad a Requisitos}
+
+Los patrones seleccionados son \textbf{apropiados} para:
+
+\begin{enumerate}
+    \item \textbf{Gestión de múltiples roles}: Strategy facilita roles diferentes
+    \item \textbf{Persistencia flexible}: Genéricos permiten múltiples tipos
+    \item \textbf{API REST}: Service Layer expone lógica clara
+    \item \textbf{Extensibilidad}: Nuevos tipos se agregan sin refactoring mayor
+\end{enumerate}
+
+\section{Recomendación Final}
+
+Se recomienda mantener esta arquitectura de patrones como base, implementando las mejoras sugeridas en el Capítulo 5, particularmente:
+
+\begin{itemize}
+    \item Patrón DAO para persistencia más robusta
+    \item Validación y manejo de excepciones mejorado
+    \item Completar la implementación de métodos plantilla
+    \item Extensión de servicios para persistencia de Empleados
+\end{itemize}
+
+Con estos ajustes, el sistema estará mejor preparado para evolución futura y mantenimiento a largo plazo.
+
+\newpage
+
+\appendix
+
+\chapter{Referencias de Patrones}
+
+\section{Patrones de Diseño GOF}
+
+\begin{itemize}
+    \item \textbf{Creational Patterns}: Abstract Factory, Builder, Factory Method, Prototype, Singleton
+    \item \textbf{Structural Patterns}: Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy
+    \item \textbf{Behavioral Patterns}: Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor
+\end{itemize}
+
+\section{Libros Recomendados}
+
+\begin{itemize}
+    \item Design Patterns: Elements of Reusable Object-Oriented Software (Gang of Four)
+    \item Head First Design Patterns (Freeman \& Freeman)
+    \item Effective Java (Joshua Bloch)
+    \item Clean Code (Robert C. Martin)
+\end{itemize}
+
+\section{Recursos Online}
+
+\begin{itemize}
+    \item Refactoring.guru - Comprehensive Design Patterns
+    \item Oracle Java Tutorials - Generics
+    \item Java Functional Interfaces Documentation
+\end{itemize}
+
+\end{document}
