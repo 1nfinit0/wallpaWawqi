@@ -7,6 +7,9 @@ import Hero from '@components/Hero.astro';
 import MenuClient from '@components/MenuClient.astro';
 import Ubicanos from '@components/Ubicanos.astro';
 export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+Astro.response.headers.set('CDN-Cache-Control', 'no-store');
+Astro.response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
 ---
 
 <Layout title="WallpaWawqi">
