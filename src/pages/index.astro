@@ -3,7 +3,8 @@ import Layout from '@layouts/Layout.astro';
 import Logo from '@components/Logo.astro';
 import Nav from '@components/Nav.astro';
 import Hero from '@components/Hero.astro';
-import Menu from '@components/Menu.astro';
+// import Menu from '@components/Menu.astro';
+import MenuClient from '@components/MenuClient.astro';
 import Ubicanos from '@components/Ubicanos.astro';
 export const prerender = false;
 ---
@@ -24,7 +25,7 @@ export const prerender = false;
 			<p class="text-text">Descubre nuestras especialdades.</p>
 		</div>
 		<section class="w-full max-w-6xl"	>
-			<Menu />
+			<MenuClient />
 		</section>
 	</main>
 	<footer>
