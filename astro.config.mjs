@@ -1,13 +1,13 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
-import sitemap from '@astrojs/sitemap';
+import { defineConfig } from "astro/config";
+import tailwindcss from "@tailwindcss/vite";
+import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
-  site: 'https://path.vercel.app',
-  output: 'static',
+  site: "https://path.vercel.app",
+  output: "server",
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
   },
-  integrations: [sitemap()]
+  integrations: [sitemap()],
 });
