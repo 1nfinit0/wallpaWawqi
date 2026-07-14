@@ -100,7 +100,7 @@ import Layout from "@layouts/Layout.astro";
         const formData = new FormData(form);
 
         try {
-          const response = await fetch("/api/productos", {
+          const response = await fetch("https://wallpawawqisql-production.up.railway.app/productos", {
             method: "POST",
             body: formData,
           });
