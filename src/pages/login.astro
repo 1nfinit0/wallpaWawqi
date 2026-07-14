@@ -1,0 +1,87 @@
+---
+import Layout from "@layouts/Layout.astro";
+---
+
+<Layout title="Iniciar sesión">
+  <div class="min-h-[70vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm bg-white/5 backdrop-blur rounded-xl shadow-lg p-8">
+      <h1 class="text-2xl font-bold mb-6 text-text text-center">Iniciar sesión</h1>
+
+      <div class="flex flex-col gap-4">
+        <input
+          id="nombre"
+          type="text"
+          placeholder="Nombre"
+          class="w-full px-4 py-2 rounded-lg border border-gray-300 text-text"
+        />
+        <input
+          id="celular"
+          type="text"
+          placeholder="Celular"
+          class="w-full px-4 py-2 rounded-lg border border-gray-300 text-text"
+        />
+        <p id="error-msg" class="text-red-500 text-sm hidden"></p>
+        <button
+          id="login-btn"
+          class="w-full bg-secondary hover:bg-gray-600 text-black font-bold py-2 rounded-lg transition-colors"
+        >
+          Ingresar
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { setSession } from "@libs/session";
+
+  const params = new URLSearchParams(window.location.search);
+  const redirectTo = params.get("redirect") || "/";
+
+  const btn = document.getElementById("login-btn") as HTMLButtonElement;
+  const nombreInput = document.getElementById("nombre") as HTMLInputElement;
+  const celularInput = document.getElementById("celular") as HTMLInputElement;
+  const errorMsg = document.getElementById("error-msg") as HTMLParagraphElement;
+
+  async function login() {
+    errorMsg.classList.add("hidden");
+    const nombre = nombreInput.value.trim();
+    const celular = celularInput.value.trim();
+
+    if (!nombre || !celular) {
+      errorMsg.textContent = "Completa ambos campos";
+      errorMsg.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "https://wallpawawqisql-production.up.railway.app/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, celular }),
+        }
+      );
+
+      if (!response.ok) {
+        errorMsg.textContent = "Nombre o celular incorrectos";
+        errorMsg.classList.remove("hidden");
+        return;
+      }
+
+      const empleado = await response.json();
+      setSession(empleado);
+      window.location.href = redirectTo;
+    } catch (err) {
+      console.error(err);
+      errorMsg.textContent = "Error de conexión";
+      errorMsg.classList.remove("hidden");
+    }
+  }
+
+  btn.addEventListener("click", login);
+  celularInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+  });
+</script>

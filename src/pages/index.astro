@@ -1,37 +1,43 @@
 ---
-import Layout from '@layouts/Layout.astro';
-import Logo from '@components/Logo.astro';
-import Nav from '@components/Nav.astro';
-import Hero from '@components/Hero.astro';
-// import Menu from '@components/Menu.astro';
-import MenuClient from '@components/MenuClient.astro';
-import Ubicanos from '@components/Ubicanos.astro';
+import Layout from "@layouts/Layout.astro";
+import Logo from "@components/Logo.astro";
+import Nav from "@components/Nav.astro";
+import Hero from "@components/Hero.astro";
+import MenuClient from "@components/MenuClient.astro";
+import Ubicanos from "@components/Ubicanos.astro";
 export const prerender = false;
-Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-Astro.response.headers.set('CDN-Cache-Control', 'no-store');
-Astro.response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+Astro.response.headers.set(
+  "Cache-Control",
+  "no-store, no-cache, must-revalidate, max-age=0",
+);
+Astro.response.headers.set("CDN-Cache-Control", "no-store");
+Astro.response.headers.set("Vercel-CDN-Cache-Control", "no-store");
 ---
 
 <Layout title="WallpaWawqi">
-	<header class="w-full flex flex-col">
-		<div class="w-full flex items-center justify-between bg-primary py-4 px-4 md:px-24">
-			<Logo />
-			<Nav />
-		</div>
-		<div class="w-full">
-			<Hero />
-		</div>
-	</header>
-	<main class="w-full flex flex-col items-center justify-center py-12 px-4 md:px-24">
-		<div class="w-full text-center">
-			<h2 class="text-text-feature text-3xl py-8">Productos Destacados</h2>
-			<p class="text-text">Descubre nuestras especialdades.</p>
-		</div>
-		<section class="w-full max-w-6xl"	>
-			<MenuClient />
-		</section>
-	</main>
-	<footer>
-		<Ubicanos />
-	</footer>
+  <div class="w-full flex flex-col">
+    <header class="w-full bg-primary py-4 px-4 md:px-24">
+      <div class="w-full flex flex-wrap items-center justify-between gap-4">
+        <Logo />
+        <Nav />
+      </div>
+    </header>
+    <div class="w-full">
+      <Hero />
+    </div>
+  </div>
+  <main
+    class="w-full flex flex-col items-center justify-center py-12 px-4 md:px-24"
+  >
+    <div class="w-full text-center">
+      <h2 class="text-text-feature text-3xl py-8">Productos Destacados</h2>
+      <p class="text-text">Descubre nuestras especialdades.</p>
+    </div>
+    <section class="w-full max-w-6xl">
+      <MenuClient />
+    </section>
+  </main>
+  <footer>
+    <Ubicanos />
+  </footer>
 </Layout>

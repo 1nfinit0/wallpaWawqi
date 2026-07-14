@@ -1,11 +1,53 @@
 ---
-
 ---
 <nav class="w-fit flex items-center justify-end">
-  <ul class="flex space-x-8">
-    <li><a href="/" class="text-text-secondary hover:text-text-feature text-lg">Home</a></li>
-    <li><a href="/about" class="text-text-secondary hover:text-text-feature text-lg">About</a></li>
-    <li><a href="/contact" class="text-text-secondary hover:text-text-feature text-lg">Contact</a></li>
-    <li><a href="/cart" class="text-text-secondary hover:text-text-feature text-lg">🛒</a></li>
+  <ul class="flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
+    <li><a href="/" class="text-text-secondary hover:text-text-feature text-lg">Inicio</a></li>
+    <li><a href="/contact" class="text-text-secondary hover:text-text-feature text-lg">Contacto</a></li>
+    <li>
+      <a id="btn-ordenar" href="/ordenar-compra" class="text-text-secondary hover:text-text-feature text-lg">
+        Ordenar compra
+      </a>
+    </li>
+    <li>
+      <a id="btn-agregar-producto" href="/RegistroPlatillo" class="text-text-secondary hover:text-text-feature text-lg">
+        Agregar platillos
+      </a>
+    </li>
+    <li id="user-session" class="hidden items-center gap-3">
+      <span id="user-name" class="text-sm text-text whitespace-nowrap"></span>
+      <button id="logout-btn" class="text-sm text-red-500 hover:underline cursor-pointer">
+        Cerrar sesión
+      </button>
+    </li>
   </ul>
 </nav>
+
+<script>
+  import { getSession, irConSesion, logout } from "@libs/session";
+
+  document.getElementById("btn-ordenar")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    irConSesion("/ordenar-compra");
+  });
+
+  document.getElementById("btn-agregar-producto")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    irConSesion("/RegistroPlatilloConImagen");
+  });
+
+  const sesion = getSession();
+  const userSessionEl = document.getElementById("user-session");
+  const userNameEl = document.getElementById("user-name");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  if (sesion && userSessionEl && userNameEl) {
+    userNameEl.textContent = `${sesion.nombre} (${sesion.cargo})`;
+    userSessionEl.classList.remove("hidden");
+    userSessionEl.classList.add("flex");
+  }
+
+  logoutBtn?.addEventListener("click", () => {
+    logout("/");
+  });
+</script>
