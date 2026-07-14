@@ -1,0 +1,124 @@
+---
+import Layout from "@layouts/Layout.astro";
+---
+
+<Layout title="Registrar Platillo">
+  <div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Registrar Nuevo Platillo</h1>
+
+    <form id="formProducto" class="bg-white p-6 rounded shadow max-w-md">
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-2">Nombre</label>
+        <input
+          type="text"
+          id="nombre"
+          name="nombre"
+          required
+          class="w-full border px-3 py-2 rounded"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-2">Descripción</label>
+        <textarea
+          id="descripcion"
+          name="descripcion"
+          class="w-full border px-3 py-2 rounded"></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-2">Precio</label>
+        <input
+          type="number"
+          id="precio"
+          name="precio"
+          step="0.01"
+          required
+          class="w-full border px-3 py-2 rounded"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-2">Imagen</label>
+        <input
+          type="file"
+          id="imagen"
+          name="imagen"
+          accept="image/*"
+          required
+          class="w-full border px-3 py-2 rounded"
+        />
+        <img id="preview" class="mt-2 max-w-xs" />
+      </div>
+
+      <button
+        type="submit"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Crear Platillo
+      </button>
+    </form>
+
+    <p id="mensaje" class="mt-4"></p>
+  </div>
+
+  <script>
+    const form = document.getElementById(
+      "formProducto",
+    ) as HTMLFormElement | null;
+    const imagenInput = document.getElementById(
+      "imagen",
+    ) as HTMLInputElement | null;
+    const preview = document.getElementById(
+      "preview",
+    ) as HTMLImageElement | null;
+    const mensaje = document.getElementById(
+      "mensaje",
+    ) as HTMLParagraphElement | null;
+
+    if (form && imagenInput && preview && mensaje) {
+      // Preview de imagen
+      imagenInput.addEventListener("change", (e) => {
+        const target = e.target as HTMLInputElement | null;
+        const file = target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const result = ev.target?.result;
+            if (typeof result === "string") {
+              preview.src = result;
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Submit
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch("/api/productos", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            mensaje.textContent = `✅ Platillo creado! ID: ${data.id}`;
+            form.reset();
+            preview.src = "";
+          } else {
+            mensaje.textContent = `❌ Error: ${response.statusText}`;
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Error desconocido";
+          mensaje.textContent = `❌ Error de conexión: ${message}`;
+        }
+      });
+    }
+  </script>
+</Layout>
