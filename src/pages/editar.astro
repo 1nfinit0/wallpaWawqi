@@ -1,0 +1,225 @@
+---
+import Layout from "@layouts/Layout.astro";
+import Logo from "@components/Logo.astro";
+import Nav from "@components/Nav.astro";
+import Ubicanos from "@components/Ubicanos.astro";
+---
+
+<Layout title="Editar Platillo">
+  <header class="w-full flex flex-col">
+    <div
+      class="w-full flex items-center justify-between bg-primary py-4 px-4 md:px-24"
+    >
+      <Logo />
+      <Nav />
+    </div>
+  </header>
+
+  <main
+    class="w-full flex flex-col items-center justify-center py-12 px-4 md:px-24"
+  >
+    <form
+      id="editarForm"
+      class="w-full max-w-md bg-white rounded-lg shadow-lg p-8 flex flex-col gap-6"
+    >
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Editar Platillo</h2>
+
+      <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">Nombre:</span>
+        <input
+          type="text"
+          id="nombre"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">Precio:</span>
+        <input
+          type="number"
+          id="precio"
+          step="0.01"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">Categoría:</span>
+        <select
+          id="categoria"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+        >
+          <option value="26">Entradas</option>
+          <option value="27">Platos Fuertes</option>
+          <option value="28">Bebidas</option>
+          <option value="29">Postres</option>
+        </select>
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">Descripción:</span>
+        <textarea
+          id="descripcion"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none h-28"
+        ></textarea>
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">URL de imagen:</span>
+        <input
+          type="url"
+          id="img"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <img id="preview" class="mt-3 max-w-full rounded-lg" />
+      </label>
+
+      <div class="flex gap-3">
+        <button
+          type="submit"
+          class="flex-1 bg-text-feature hover:bg-text-secondary font-bold py-2 px-4 rounded-lg transition duration-200 text-primary"
+        >
+          Guardar cambios
+        </button>
+        <button
+          type="button"
+          id="btnEliminar"
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+        >
+          Eliminar
+        </button>
+      </div>
+    </form>
+
+    <div id="resultado" class="mt-6 text-center text-sm"></div>
+  </main>
+
+  <footer>
+    <Ubicanos />
+  </footer>
+</Layout>
+
+<script>
+  import { isLoggedIn } from "@libs/session";
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  if (!isLoggedIn()) {
+    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+  }
+
+  if (!id) {
+    document.body.innerHTML =
+      '<p class="text-center text-red-500 py-12">No se especificó un producto para editar.</p>';
+  }
+
+  const API_BASE = "https://wallpawawqisql-production.up.railway.app";
+
+  const form = document.getElementById("editarForm") as HTMLFormElement | null;
+  const nombreInput = document.getElementById("nombre") as HTMLInputElement | null;
+  const precioInput = document.getElementById("precio") as HTMLInputElement | null;
+  const categoriaSelect = document.getElementById("categoria") as HTMLSelectElement | null;
+  const descripcionInput = document.getElementById("descripcion") as HTMLTextAreaElement | null;
+  const imgInput = document.getElementById("img") as HTMLInputElement | null;
+  const preview = document.getElementById("preview") as HTMLImageElement | null;
+  const resultado = document.getElementById("resultado") as HTMLDivElement | null;
+  const btnEliminar = document.getElementById("btnEliminar") as HTMLButtonElement | null;
+
+  async function cargarProducto() {
+    if (!id) return;
+    try {
+      const response = await fetch(`${API_BASE}/productos/${id}`);
+      if (!response.ok) throw new Error("Producto no encontrado");
+
+      const producto = await response.json();
+
+      if (nombreInput) nombreInput.value = producto.name ?? "";
+      if (precioInput) precioInput.value = producto.price ?? "";
+      if (categoriaSelect) categoriaSelect.value = String(producto.categoryId ?? "26");
+      if (descripcionInput) descripcionInput.value = producto.description ?? "";
+      if (imgInput) imgInput.value = producto.img ?? "";
+      if (preview) preview.src = producto.img ?? "";
+    } catch (error) {
+      if (resultado) {
+        resultado.textContent = "❌ No se pudo cargar el producto";
+        resultado.className = "mt-6 text-center text-sm text-red-500";
+      }
+    }
+  }
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!id || !resultado) return;
+
+      // OJO: el backend deserializa esto directo a la clase Producto,
+      // por eso las claves deben ser exactamente estas (name, description,
+      // price, categoryId, img), NO "nombre"/"precio" como en el POST de creación.
+      const payload = {
+        name: nombreInput?.value,
+        description: descripcionInput?.value,
+        price: parseFloat(precioInput?.value ?? "0"),
+        categoryId: parseInt(categoriaSelect?.value ?? "26", 10),
+        img: imgInput?.value,
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/productos/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          resultado.textContent = "✅ Producto actualizado";
+          resultado.className = "mt-6 text-center text-sm text-green-600";
+        } else {
+          const error = await response.json();
+          resultado.textContent = `❌ Error: ${error.error}`;
+          resultado.className = "mt-6 text-center text-sm text-red-500";
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Error desconocido";
+        resultado.textContent = `❌ Error de conexión: ${message}`;
+        resultado.className = "mt-6 text-center text-sm text-red-500";
+      }
+    });
+  }
+
+  btnEliminar?.addEventListener("click", async () => {
+    if (!id || !resultado) return;
+
+    const confirmado = confirm("¿Seguro que quieres eliminar este platillo? Esta acción no se puede deshacer.");
+    if (!confirmado) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/productos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        resultado.textContent = "✅ Producto eliminado. Redirigiendo...";
+        resultado.className = "mt-6 text-center text-sm text-green-600";
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        const error = await response.json();
+        resultado.textContent = `❌ Error: ${error.error}`;
+        resultado.className = "mt-6 text-center text-sm text-red-500";
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error desconocido";
+      resultado.textContent = `❌ Error de conexión: ${message}`;
+      resultado.className = "mt-6 text-center text-sm text-red-500";
+    }
+  });
+
+  cargarProducto();
+</script>

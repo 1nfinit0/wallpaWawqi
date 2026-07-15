@@ -1,0 +1,246 @@
+---
+// src/components/BoletaCompra.astro
+---
+
+<div class="w-full max-w-5xl flex flex-col gap-8">
+  <!-- Barra de búsqueda -->
+  <div class="w-full">
+    <input
+      id="buscador"
+      type="text"
+      placeholder="Buscar producto por nombre..."
+      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text"
+    />
+  </div>
+
+  <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Lista de productos -->
+    <div class="w-full">
+      <h3 class="text-xl font-bold text-text mb-4">Productos disponibles</h3>
+      <div
+        id="lista-productos"
+        class="flex flex-col gap-2 max-h-125 overflow-y-auto pr-2"
+      >
+        <p class="text-text-secondary text-sm">Cargando productos...</p>
+      </div>
+    </div>
+
+    <!-- Boleta -->
+    <div class="w-full">
+      <h3 class="text-xl font-bold text-text mb-4">Boleta</h3>
+      <div
+        id="boleta-items"
+        class="flex flex-col gap-3 max-h-125 overflow-y-auto pr-2"
+      >
+        <p id="boleta-vacia" class="text-text-secondary text-sm">
+          Aún no has agregado productos.
+        </p>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-gray-300 flex justify-between items-center">
+        <span class="text-lg font-bold text-text">Total</span>
+        <span id="boleta-total" class="text-2xl font-bold text-text-feature">S/ 0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  interface Producto {
+    id: number;
+    name: string;
+    price: number;
+    img: string;
+    categoryId: number;
+  }
+
+  interface ItemBoleta {
+    id: number;
+    name: string;
+    price: number;
+    cantidad: number;
+  }
+
+  let productos: Producto[] = [];
+  let boleta: ItemBoleta[] = [];
+
+  const listaProductosEl = document.getElementById("lista-productos") as HTMLDivElement;
+  const boletaItemsEl = document.getElementById("boleta-items") as HTMLDivElement;
+  const boletaTotalEl = document.getElementById("boleta-total") as HTMLSpanElement;
+  const buscadorEl = document.getElementById("buscador") as HTMLInputElement;
+
+  function formatearPrecio(precio: number): string {
+    return `S/ ${precio.toFixed(2)}`;
+  }
+
+  function renderProductos(filtro: string = "") {
+    const filtrados = productos.filter((p) =>
+      p.name.toLowerCase().includes(filtro.toLowerCase())
+    );
+
+    if (filtrados.length === 0) {
+      listaProductosEl.innerHTML =
+        '<p class="text-text-secondary text-sm">No se encontraron productos.</p>';
+      return;
+    }
+
+    listaProductosEl.innerHTML = filtrados
+  .map(
+    (p) => `
+  <div class="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-lg border border-gray-200">
+    <div class="flex-1 min-w-0">
+      <p class="text-text font-semibold truncate">${p.name}</p>
+      <p class="text-text-secondary text-sm">${formatearPrecio(p.price)}</p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+
+        href="/editar?id=${p.id}"
+        class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
+      >
+        Editar
+      </a>
+      <button
+        data-id="${p.id}"
+        class="btn-agregar bg-primary hover:bg-gost-hover text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
+      >
+        Agregar
+      </button>
+    </div>
+  </div>
+`
+  )
+  .join("");
+
+    listaProductosEl.querySelectorAll(".btn-agregar").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = parseInt((e.currentTarget as HTMLButtonElement).dataset.id!, 10);
+        agregarABoleta(id);
+      });
+    });
+  }
+
+  function agregarABoleta(id: number) {
+    const producto = productos.find((p) => p.id === id);
+    if (!producto) return;
+
+    const existente = boleta.find((item) => item.id === id);
+    if (existente) {
+      existente.cantidad += 1;
+    } else {
+      boleta.push({
+        id: producto.id,
+        name: producto.name,
+        price: producto.price,
+        cantidad: 1,
+      });
+    }
+
+    renderBoleta();
+  }
+
+  function actualizarCantidad(id: number, cantidad: number) {
+    const item = boleta.find((i) => i.id === id);
+    if (!item) return;
+
+    if (cantidad <= 0) {
+      eliminarDeBoleta(id);
+      return;
+    }
+
+    item.cantidad = cantidad;
+    renderBoleta();
+  }
+
+  function eliminarDeBoleta(id: number) {
+    boleta = boleta.filter((item) => item.id !== id);
+    renderBoleta();
+  }
+
+  function renderBoleta() {
+    if (boleta.length === 0) {
+      boletaItemsEl.innerHTML =
+        '<p id="boleta-vacia" class="text-text-secondary text-sm">Aún no has agregado productos.</p>';
+      boletaTotalEl.textContent = formatearPrecio(0);
+      return;
+    }
+
+    boletaItemsEl.innerHTML = boleta
+      .map((item) => {
+        const subtotal = item.price * item.cantidad;
+        return `
+        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-gray-200">
+          <div class="flex-1 min-w-0">
+            <p class="text-text font-semibold truncate">${item.name}</p>
+            <p class="text-text-secondary text-sm">${formatearPrecio(item.price)} c/u</p>
+          </div>
+
+          <input
+            type="number"
+            min="1"
+            value="${item.cantidad}"
+            data-id="${item.id}"
+            class="input-cantidad w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-text"
+          />
+
+          <p class="w-20 text-right font-bold text-text-feature shrink-0">
+            ${formatearPrecio(subtotal)}
+          </p>
+
+          <button
+            data-id="${item.id}"
+            class="btn-eliminar shrink-0 text-red-500 hover:text-red-700 font-bold text-lg px-2"
+            aria-label="Eliminar"
+          >
+            ✕
+          </button>
+        </div>
+      `;
+      })
+      .join("");
+
+    boletaItemsEl.querySelectorAll(".input-cantidad").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        const target = e.currentTarget as HTMLInputElement;
+        const id = parseInt(target.dataset.id!, 10);
+        const cantidad = parseInt(target.value, 10);
+        actualizarCantidad(id, isNaN(cantidad) ? 1 : cantidad);
+      });
+    });
+
+    boletaItemsEl.querySelectorAll(".btn-eliminar").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = parseInt((e.currentTarget as HTMLButtonElement).dataset.id!, 10);
+        eliminarDeBoleta(id);
+      });
+    });
+
+    const total = boleta.reduce((acc, item) => acc + item.price * item.cantidad, 0);
+    boletaTotalEl.textContent = formatearPrecio(total);
+  }
+
+  async function cargarProductos() {
+    try {
+      const response = await fetch(
+        "https://wallpawawqisql-production.up.railway.app/productos"
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      productos = await response.json();
+      renderProductos();
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+      listaProductosEl.innerHTML =
+        '<p class="text-red-500 text-sm">Error cargando productos</p>';
+    }
+  }
+
+  buscadorEl.addEventListener("input", (e) => {
+    const valor = (e.target as HTMLInputElement).value;
+    renderProductos(valor);
+  });
+
+  cargarProductos();
+</script>

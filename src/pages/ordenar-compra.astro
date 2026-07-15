@@ -1,0 +1,38 @@
+---
+import Layout from "@layouts/Layout.astro";
+import Logo from "@components/Logo.astro";
+import Nav from "@components/Nav.astro";
+import Ubicanos from "@components/Ubicanos.astro";
+import BoletaCompra from "@components/BoletaCompra.astro";
+---
+<Layout title="Ordenar Compra">
+  <header class="w-full flex flex-col">
+    <div
+      class="w-full flex items-center justify-between bg-primary py-4 px-4 md:px-24"
+    >
+      <Logo />
+      <Nav />
+    </div>
+  </header>
+
+  <main
+    class="w-full flex flex-col items-center justify-center py-12 px-4 md:px-24"
+  >
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Ordenar Compra</h2>
+    <p class="text-text mb-6">Busca productos y agrégalos a la boleta.</p>
+
+    <BoletaCompra />
+  </main>
+
+  <footer>
+    <Ubicanos />
+  </footer>
+</Layout>
+
+<script>
+  import { isLoggedIn } from "@libs/session";
+
+  if (!isLoggedIn()) {
+    window.location.href = `/login?redirect=${encodeURIComponent("/ordenar-compra")}`;
+  }
+</script>
