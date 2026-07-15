@@ -45,14 +45,13 @@
           >S/ 0.00</span
         >
       </div>
-      
 
       <button
         id="btn-generar-pedido"
         class="w-full mt-4 bg-text-feature hover:bg-text-secondary text-primary font-bold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         disabled
       >
-        📄 Generar Pedido (PDF)
+        Generar Pedido (PDF)
       </button>
     </div>
   </div>
@@ -61,6 +60,7 @@
 <script>
   import { jsPDF } from "jspdf";
   import { getSession } from "@libs/session";
+
   interface Producto {
     id: number;
     name: string;
@@ -78,6 +78,10 @@
 
   let productos: Producto[] = [];
   let boleta: ItemBoleta[] = [];
+  const anchoRolloMm = 80;
+  const paddingHorizontalMm = 4;
+  const logoSizeMm = 18;
+  const gapEntreLogosMm = 4;
 
   const listaProductosEl = document.getElementById(
     "lista-productos",
@@ -95,6 +99,38 @@
 
   function formatearPrecio(precio: number): string {
     return `S/ ${precio.toFixed(2)}`;
+  }
+
+  function cargarImagenComoDataUrl(src: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const imagen = new Image();
+      imagen.crossOrigin = "anonymous";
+      imagen.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = imagen.naturalWidth;
+        canvas.height = imagen.naturalHeight;
+
+        const contexto = canvas.getContext("2d");
+        if (!contexto) {
+          reject(new Error(`No se pudo procesar la imagen: ${src}`));
+          return;
+        }
+
+        contexto.drawImage(imagen, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+
+      imagen.onerror = () => {
+        reject(new Error(`No se pudo cargar la imagen: ${src}`));
+      };
+
+      imagen.src = src;
+    });
+  }
+
+  function recortarTexto(texto: string, limite: number): string {
+    if (texto.length <= limite) return texto;
+    return `${texto.slice(0, Math.max(0, limite - 1))}…`;
   }
 
   function renderProductos(filtro: string = "") {
@@ -251,7 +287,7 @@
     );
     boletaTotalEl.textContent = formatearPrecio(total);
 
-    btnGenerarPedido.disabled = false; // ← ESTO es lo que te falta agregar aquí
+    btnGenerarPedido.disabled = false;
   }
 
   async function cargarProductos() {
@@ -278,22 +314,40 @@
     renderProductos(valor);
   });
 
-  function generarPDFPedido() {
+  async function generarPDFPedido() {
     if (boleta.length === 0) return;
 
     const sesion = getSession();
-    const anchoMM = 70; // ~1/3 de A4 (210mm / 3)
-    const altoBase = 55; // encabezado + footer fijos
+    const altoBase = 74;
     const altoPorItem = 8;
     const altoEstimado = altoBase + boleta.length * altoPorItem;
 
     const doc = new jsPDF({
       unit: "mm",
-      format: [anchoMM, altoEstimado],
+      format: [anchoRolloMm, altoEstimado],
     });
 
-    const centroX = anchoMM / 2;
-    let y = 8;
+    const centroX = anchoRolloMm / 2;
+    let y = 6;
+
+    const [logoLocal, logoUtp] = await Promise.all([
+      cargarImagenComoDataUrl("/logo.jpeg"),
+      cargarImagenComoDataUrl("/imgs/Logo_UTP.webp"),
+    ]);
+
+    const logoCentradoX = (anchoRolloMm - logoSizeMm * 2 - gapEntreLogosMm) / 2;
+
+    doc.addImage(logoLocal, "PNG", logoCentradoX, y, logoSizeMm, logoSizeMm);
+    doc.addImage(
+      logoUtp,
+      "PNG",
+      logoCentradoX + logoSizeMm + gapEntreLogosMm,
+      y,
+      logoSizeMm,
+      logoSizeMm,
+    );
+
+    y += logoSizeMm + 4;
 
     doc.setFont("courier", "bold");
     doc.setFontSize(12);
@@ -310,43 +364,46 @@
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString("es-PE");
     const hora = ahora.toLocaleTimeString("es-PE");
-    doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 4, y);
+    doc.text(`Fecha: ${fecha}  Hora: ${hora}`, paddingHorizontalMm, y);
     y += 4;
 
     if (sesion) {
-      doc.text(`Atendido por: ${sesion.nombre} ${sesion.apellido}`, 4, y);
+      doc.text(
+        `Atendido por: ${sesion.nombre} ${sesion.apellido}`,
+        paddingHorizontalMm,
+        y,
+      );
       y += 4;
     }
 
     y += 1;
-    doc.text("-".repeat(38), 4, y);
+    doc.text("-".repeat(40), paddingHorizontalMm, y);
     y += 4;
 
     doc.setFont("courier", "bold");
-    doc.text("Producto", 4, y);
-    doc.text("Cant", 42, y);
-    doc.text("Subt.", 55, y);
+    doc.text("Producto", paddingHorizontalMm, y);
+    doc.text("Cant", paddingHorizontalMm + 34, y);
+    doc.text("Subt.", paddingHorizontalMm + 48, y);
     doc.setFont("courier", "normal");
     y += 4;
 
-    doc.text("-".repeat(38), 4, y);
+    doc.text("-".repeat(40), paddingHorizontalMm, y);
     y += 4;
 
     boleta.forEach((item) => {
       const subtotal = item.price * item.cantidad;
-      const nombreCorto =
-        item.name.length > 22 ? item.name.slice(0, 22) + "." : item.name;
+      const nombreCorto = recortarTexto(item.name, 24);
 
-      doc.text(nombreCorto, 4, y);
+      doc.text(nombreCorto, paddingHorizontalMm, y);
       y += 4;
-      doc.text(`  ${formatearPrecio(item.price)} c/u`, 4, y);
-      doc.text(`x${item.cantidad}`, 42, y);
-      doc.text(formatearPrecio(subtotal), 55, y);
+      doc.text(`  ${formatearPrecio(item.price)} c/u`, paddingHorizontalMm, y);
+      doc.text(`x${item.cantidad}`, paddingHorizontalMm + 34, y);
+      doc.text(formatearPrecio(subtotal), paddingHorizontalMm + 48, y);
       y += 4;
     });
 
     y += 1;
-    doc.text("-".repeat(38), 4, y);
+    doc.text("-".repeat(40), paddingHorizontalMm, y);
     y += 5;
 
     const total = boleta.reduce(
@@ -355,8 +412,8 @@
     );
     doc.setFont("courier", "bold");
     doc.setFontSize(10);
-    doc.text("TOTAL:", 4, y);
-    doc.text(formatearPrecio(total), 55, y);
+    doc.text("TOTAL:", paddingHorizontalMm, y);
+    doc.text(formatearPrecio(total), paddingHorizontalMm + 48, y);
     y += 6;
 
     doc.setFont("courier", "normal");
@@ -367,7 +424,9 @@
     doc.save(`pedido-${timestamp}.pdf`);
   }
 
-  btnGenerarPedido.addEventListener("click", generarPDFPedido);
+  btnGenerarPedido.addEventListener("click", () => {
+    void generarPDFPedido();
+  });
 
   cargarProductos();
 </script>
