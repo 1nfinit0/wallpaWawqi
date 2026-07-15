@@ -85,31 +85,31 @@
     }
 
     listaProductosEl.innerHTML = filtrados
-  .map(
-    (p) => `
-  <div class="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-lg border border-gray-200">
-    <div class="flex-1 min-w-0">
-      <p class="text-text font-semibold truncate">${p.name}</p>
-      <p class="text-text-secondary text-sm">${formatearPrecio(p.price)}</p>
-    </div>
-    <div class="flex gap-2 shrink-0">
-
-        href="/editar?id=${p.id}"
-        class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
-      >
-        Editar
-      </a>
-      <button
-        data-id="${p.id}"
-        class="btn-agregar bg-primary hover:bg-gost-hover text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
-      >
-        Agregar
-      </button>
-    </div>
-  </div>
-`
-  )
-  .join("");
+      .map(
+        (p) => `
+      <div class="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-lg border border-gray-200">
+        <div class="flex-1 min-w-0">
+          <p class="text-text font-semibold truncate">${p.name}</p>
+          <p class="text-text-secondary text-sm">${formatearPrecio(p.price)}</p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <a
+            href="/editar?id=${p.id}"
+            class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
+          >
+            Editar
+          </a>
+          <button
+            data-id="${p.id}"
+            class="btn-agregar bg-orange-500 hover:bg-gost-hover text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors"
+          >
+            Agregar
+          </button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
 
     listaProductosEl.querySelectorAll(".btn-agregar").forEach((btn) => {
       btn.addEventListener("click", (e) => {
