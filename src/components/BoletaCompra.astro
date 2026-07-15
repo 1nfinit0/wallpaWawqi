@@ -37,15 +37,30 @@
         </p>
       </div>
 
-      <div class="mt-6 pt-4 border-t border-gray-300 flex justify-between items-center">
+      <div
+        class="mt-6 pt-4 border-t border-gray-300 flex justify-between items-center"
+      >
         <span class="text-lg font-bold text-text">Total</span>
-        <span id="boleta-total" class="text-2xl font-bold text-text-feature">S/ 0.00</span>
+        <span id="boleta-total" class="text-2xl font-bold text-text-feature"
+          >S/ 0.00</span
+        >
       </div>
+      
+
+      <button
+        id="btn-generar-pedido"
+        class="w-full mt-4 bg-text-feature hover:bg-text-secondary text-primary font-bold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled
+      >
+        📄 Generar Pedido (PDF)
+      </button>
     </div>
   </div>
 </div>
 
 <script>
+  import { jsPDF } from "jspdf";
+  import { getSession } from "@libs/session";
   interface Producto {
     id: number;
     name: string;
@@ -64,10 +79,19 @@
   let productos: Producto[] = [];
   let boleta: ItemBoleta[] = [];
 
-  const listaProductosEl = document.getElementById("lista-productos") as HTMLDivElement;
-  const boletaItemsEl = document.getElementById("boleta-items") as HTMLDivElement;
-  const boletaTotalEl = document.getElementById("boleta-total") as HTMLSpanElement;
+  const listaProductosEl = document.getElementById(
+    "lista-productos",
+  ) as HTMLDivElement;
+  const boletaItemsEl = document.getElementById(
+    "boleta-items",
+  ) as HTMLDivElement;
+  const boletaTotalEl = document.getElementById(
+    "boleta-total",
+  ) as HTMLSpanElement;
   const buscadorEl = document.getElementById("buscador") as HTMLInputElement;
+  const btnGenerarPedido = document.getElementById(
+    "btn-generar-pedido",
+  ) as HTMLButtonElement;
 
   function formatearPrecio(precio: number): string {
     return `S/ ${precio.toFixed(2)}`;
@@ -75,7 +99,7 @@
 
   function renderProductos(filtro: string = "") {
     const filtrados = productos.filter((p) =>
-      p.name.toLowerCase().includes(filtro.toLowerCase())
+      p.name.toLowerCase().includes(filtro.toLowerCase()),
     );
 
     if (filtrados.length === 0) {
@@ -107,13 +131,16 @@
           </button>
         </div>
       </div>
-    `
+    `,
       )
       .join("");
 
     listaProductosEl.querySelectorAll(".btn-agregar").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = parseInt((e.currentTarget as HTMLButtonElement).dataset.id!, 10);
+        const id = parseInt(
+          (e.currentTarget as HTMLButtonElement).dataset.id!,
+          10,
+        );
         agregarABoleta(id);
       });
     });
@@ -161,6 +188,7 @@
       boletaItemsEl.innerHTML =
         '<p id="boleta-vacia" class="text-text-secondary text-sm">Aún no has agregado productos.</p>';
       boletaTotalEl.textContent = formatearPrecio(0);
+      btnGenerarPedido.disabled = true;
       return;
     }
 
@@ -209,19 +237,27 @@
 
     boletaItemsEl.querySelectorAll(".btn-eliminar").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = parseInt((e.currentTarget as HTMLButtonElement).dataset.id!, 10);
+        const id = parseInt(
+          (e.currentTarget as HTMLButtonElement).dataset.id!,
+          10,
+        );
         eliminarDeBoleta(id);
       });
     });
 
-    const total = boleta.reduce((acc, item) => acc + item.price * item.cantidad, 0);
+    const total = boleta.reduce(
+      (acc, item) => acc + item.price * item.cantidad,
+      0,
+    );
     boletaTotalEl.textContent = formatearPrecio(total);
+
+    btnGenerarPedido.disabled = false; // ← ESTO es lo que te falta agregar aquí
   }
 
   async function cargarProductos() {
     try {
       const response = await fetch(
-        "https://wallpawawqisql-production.up.railway.app/productos"
+        "https://wallpawawqisql-production.up.railway.app/productos",
       );
 
       if (!response.ok) {
@@ -241,6 +277,97 @@
     const valor = (e.target as HTMLInputElement).value;
     renderProductos(valor);
   });
+
+  function generarPDFPedido() {
+    if (boleta.length === 0) return;
+
+    const sesion = getSession();
+    const anchoMM = 70; // ~1/3 de A4 (210mm / 3)
+    const altoBase = 55; // encabezado + footer fijos
+    const altoPorItem = 8;
+    const altoEstimado = altoBase + boleta.length * altoPorItem;
+
+    const doc = new jsPDF({
+      unit: "mm",
+      format: [anchoMM, altoEstimado],
+    });
+
+    const centroX = anchoMM / 2;
+    let y = 8;
+
+    doc.setFont("courier", "bold");
+    doc.setFontSize(12);
+    doc.text("WallpaWawqi", centroX, y, { align: "center" });
+    y += 5;
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.text("Pedido interno - No es comprobante fiscal", centroX, y, {
+      align: "center",
+    });
+    y += 5;
+
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString("es-PE");
+    const hora = ahora.toLocaleTimeString("es-PE");
+    doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 4, y);
+    y += 4;
+
+    if (sesion) {
+      doc.text(`Atendido por: ${sesion.nombre} ${sesion.apellido}`, 4, y);
+      y += 4;
+    }
+
+    y += 1;
+    doc.text("-".repeat(38), 4, y);
+    y += 4;
+
+    doc.setFont("courier", "bold");
+    doc.text("Producto", 4, y);
+    doc.text("Cant", 42, y);
+    doc.text("Subt.", 55, y);
+    doc.setFont("courier", "normal");
+    y += 4;
+
+    doc.text("-".repeat(38), 4, y);
+    y += 4;
+
+    boleta.forEach((item) => {
+      const subtotal = item.price * item.cantidad;
+      const nombreCorto =
+        item.name.length > 22 ? item.name.slice(0, 22) + "." : item.name;
+
+      doc.text(nombreCorto, 4, y);
+      y += 4;
+      doc.text(`  ${formatearPrecio(item.price)} c/u`, 4, y);
+      doc.text(`x${item.cantidad}`, 42, y);
+      doc.text(formatearPrecio(subtotal), 55, y);
+      y += 4;
+    });
+
+    y += 1;
+    doc.text("-".repeat(38), 4, y);
+    y += 5;
+
+    const total = boleta.reduce(
+      (acc, item) => acc + item.price * item.cantidad,
+      0,
+    );
+    doc.setFont("courier", "bold");
+    doc.setFontSize(10);
+    doc.text("TOTAL:", 4, y);
+    doc.text(formatearPrecio(total), 55, y);
+    y += 6;
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(7);
+    doc.text("¡Gracias por su compra!", centroX, y, { align: "center" });
+
+    const timestamp = ahora.getTime();
+    doc.save(`pedido-${timestamp}.pdf`);
+  }
+
+  btnGenerarPedido.addEventListener("click", generarPDFPedido);
 
   cargarProductos();
 </script>
