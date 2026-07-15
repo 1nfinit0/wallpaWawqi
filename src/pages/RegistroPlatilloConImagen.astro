@@ -48,6 +48,22 @@ import Ubicanos from "@components/Ubicanos.astro";
       </label>
 
       <label class="block">
+        <span class="text-gray-700 font-semibold mb-2 block">Categoría:</span>
+        <select
+          id="categoria"
+          name="categoria"
+          required
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+        >
+          <option value="" disabled selected>Selecciona una categoría</option>
+          <option value="26">Entradas</option>
+          <option value="27">Platos Fuertes</option>
+          <option value="28">Bebidas</option>
+          <option value="29">Postres</option>
+        </select>
+      </label>
+
+      <label class="block">
         <span class="text-gray-700 font-semibold mb-2 block">Descripción:</span>
         <textarea
           id="descripcion"
@@ -89,18 +105,17 @@ import Ubicanos from "@components/Ubicanos.astro";
 <script>
   import { isLoggedIn } from "@libs/session";
 
-  // Página protegida: si no hay sesión, mandar a login con retorno
   if (!isLoggedIn()) {
-    window.location.href = `/login?redirect=${encodeURIComponent("/RegistroPlatillo")}`;
+    window.location.href = `/login?redirect=${encodeURIComponent("/RegistroPlatilloConImagen")}`;
   }
 
   const form = document.getElementById("platilloForm") as HTMLFormElement | null;
   const imagenInput = document.getElementById("imagen") as HTMLInputElement | null;
+  const categoriaSelect = document.getElementById("categoria") as HTMLSelectElement | null;
   const preview = document.getElementById("preview") as HTMLImageElement | null;
   const resultado = document.getElementById("resultado") as HTMLDivElement | null;
 
-  if (form && imagenInput && preview && resultado) {
-    // Preview de imagen
+  if (form && imagenInput && categoriaSelect && preview && resultado) {
     imagenInput.addEventListener("change", (e) => {
       const target = e.target as HTMLInputElement | null;
       const file = target?.files?.[0];
@@ -117,7 +132,6 @@ import Ubicanos from "@components/Ubicanos.astro";
       }
     });
 
-    // Submit
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       resultado.textContent = "";
@@ -132,6 +146,13 @@ import Ubicanos from "@components/Ubicanos.astro";
       const nombre = (document.getElementById("nombre") as HTMLInputElement).value;
       const descripcion = (document.getElementById("descripcion") as HTMLTextAreaElement).value;
       const precio = parseFloat((document.getElementById("precio") as HTMLInputElement).value);
+      const categoryId = parseInt(categoriaSelect.value, 10);
+
+      if (!categoryId) {
+        resultado.textContent = "❌ Selecciona una categoría";
+        resultado.className = "mt-6 text-center text-sm text-red-500";
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = async () => {
@@ -141,6 +162,7 @@ import Ubicanos from "@components/Ubicanos.astro";
           nombre,
           descripcion,
           precio,
+          categoryId,
           imagenBase64,
         };
 
